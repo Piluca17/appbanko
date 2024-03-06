@@ -19,13 +19,27 @@ app.post("/transactions", (req, res) => {
   if (type === "deposit") {
     account.movements.push({ type, amount });
   } else if (type === "withdrawal") {
+    //Maneja retiros con valores negativos
+    account.movements.push({ type, amount });
+
     // Agregar lógica para manejar retiros (verificar fondos, etc.)
     // Por simplicidad, este ejemplo solo resta el monto directamente
+    const balance = calculateBalance(account.movements);
+    if (amount > balance) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Insufficient funds" });
+    }
+
     account.movements.push({ type, amount: -amount });
   }
 
   res.json({ success: true, message: "Transaction successful", account });
 });
+
+function calculateBalance(movements) {
+  return movements.reduce((total, movement) => total + movement.amount, 0);
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

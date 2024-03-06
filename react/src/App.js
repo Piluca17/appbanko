@@ -20,16 +20,18 @@ function App() {
     setAccount({ ...account, movements: newMovements });
     // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
     sendTransactionToServer({ type: "deposit", amount });
-};
+  };
 
-// Función para manejar retiros
-const handleWithdrawal = (amount) => {
-  // Simplemente agregamos una nueva transacción de retiro al array de movimientos
-  const newMovements = [...movements, { type: "withdrawal", amount }];
-  setAccount({ ...account, movements: newMovements });
-  // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
-  sendTransactionToServer({ type: "withdrawal", amount });
-};
+  // Función para manejar retiros
+  const handleWithdrawal = (amount) => {
+    //Representa el retiro con un valor negativo
+    const withdrawalAmount = -Math.abs(amount);
+    // Simplemente agregamos una nueva transacción de retiro al array de movimientos
+    const newMovements = [...movements, { type: "withdrawal", amount: withdrawalAmount }];
+    setAccount({ ...account, movements: newMovements });
+    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount});
+  };
 
   const handleLogin = (user, pin) => {
     // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
@@ -69,9 +71,10 @@ const handleWithdrawal = (amount) => {
       .then((response) => {
         console.log("Transacción enviada con éxito:", response);
       })
-      .catch((error) => console.error("Error al enviar la transacción:", error));
+      .catch((error) =>
+        console.error("Error al enviar la transacción:", error)
+      );
   };
-
 
   return (
     <>
@@ -108,11 +111,9 @@ const handleWithdrawal = (amount) => {
           recibe una propiedad que es el array de movimientos
           muestra una lista de movimientos que son un componente llamado Movement
           que recibe una propiedad que es el movimiento */}
-          
           <Balance movements={movements} />
           <Movements movements={movements} />
           <Summary movements={movements} />
-          
           <div className="operation operation--loan">
             <h2>Haz un depósito</h2>
             <form
@@ -135,11 +136,6 @@ const handleWithdrawal = (amount) => {
               </button>
               <label className="form__label">Amount</label>
             </form>
-
-            
-
-
-
           </div>
           <div className="operation operation--withdrawal">
             <h2>Haz un retiro</h2>
@@ -178,7 +174,6 @@ const handleWithdrawal = (amount) => {
               <label className="form__label">Amount</label>
             </form>
           </div>
-          
           <div className="operation operation--close">
             <h2>Close account</h2>
             <form className="form form--close">
