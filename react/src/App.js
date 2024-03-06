@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import "./App.css";
 import Welcome from "./Componentes/Welcome/Welcome";
 import Login from "./Componentes/Login/Login";
@@ -12,6 +12,24 @@ function App() {
 
   //Si no recogemos ningun dato en movimientos, me lo das como un array vacío
   const { movements = [], owner: user = "" } = account;
+
+  // Función para manejar depósitos
+  const handleDeposit = (amount) => {
+    // Simplemente agregamos una nueva transacción de depósito al array de movimientos
+    const newMovements = [...movements, { type: "deposit", amount }];
+    setAccount({ ...account, movements: newMovements });
+    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+    sendTransactionToServer({ type: "deposit", amount });
+};
+
+// Función para manejar retiros
+const handleWithdrawal = (amount) => {
+  // Simplemente agregamos una nueva transacción de retiro al array de movimientos
+  const newMovements = [...movements, { type: "withdrawal", amount }];
+  setAccount({ ...account, movements: newMovements });
+  // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+  sendTransactionToServer({ type: "withdrawal", amount });
+};
 
   const handleLogin = (user, pin) => {
     // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
@@ -32,6 +50,29 @@ function App() {
       .catch((error) => console.error(error, "estas con error"));
   };
 
+  const sendTransactionToServer = (transaction) => {
+    // Envía la transacción al servidor
+    fetch("http://localhost:4000/transactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(transaction),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error en la llamada a la API");
+        }
+        return res.json();
+      })
+      .then((response) => {
+        console.log("Transacción enviada con éxito:", response);
+      })
+      .catch((error) => console.error("Error al enviar la transacción:", error));
+  };
+
+
   return (
     <>
       <nav>
@@ -48,19 +89,84 @@ function App() {
       {/*Si existe usuario y, como este dato es verdadero, saca todo lo que se define a continuación*/}
       {user && (
         <main className="app">
+          <div className="user-info">
+            <h2>Información del usuario</h2>
+            <p>
+              <strong>Nombre:</strong> {user.name}
+            </p>
+            <p>
+              <strong>DNI: </strong> {user.dni}
+            </p>
+            <p>
+              <strong>Número de cuenta: </strong> {user.accountNumber}
+            </p>
+            <p>
+              <strong>Dirección: </strong> {user.address}
+            </p>
+          </div>
           {/* Hacer los movimientos
           recibe una propiedad que es el array de movimientos
           muestra una lista de movimientos que son un componente llamado Movement
           que recibe una propiedad que es el movimiento */}
-
-
-
+          
           <Balance movements={movements} />
           <Movements movements={movements} />
           <Summary movements={movements} />
+          
+          <div className="operation operation--loan">
+            <h2>Haz un depósito</h2>
+            <form
+              className="form form--loan"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const amount = parseFloat(e.target.elements.amount.value);
+                handleDeposit(amount);
+              }}
+            >
+              <input
+                type="number"
+                step="0.01"
+                className="form__input form__input--amount"
+                name="amount"
+                required
+              />
+              <button type="submit" className="form__btn form__btn--deposit">
+                &uarr;
+              </button>
+              <label className="form__label">Amount</label>
+            </form>
 
+            
+
+
+
+          </div>
+          <div className="operation operation--withdrawal">
+            <h2>Haz un retiro</h2>
+            <form
+              className="form form--withdrawal"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const amount = parseFloat(e.target.elements.amount.value);
+                handleWithdrawal(amount);
+              }}
+            >
+              <input
+                type="number"
+                step="0.01"
+                className="form__input form__input--amount"
+                name="amount"
+                required
+              />
+              <button type="submit" className="form__btn form__btn--withdrawal">
+                &darr;
+              </button>
+              <label className="form__label">Amount</label>
+            </form>
+          </div>
           <div className="operation operation--transfer">
-            <h2>Transfer money</h2>
+            {" "}
+            *<h2>Transfer money</h2>
             <form className="form form--transfer">
               <input type="text" className="form__input form__input--to" />
               <input
@@ -72,19 +178,7 @@ function App() {
               <label className="form__label">Amount</label>
             </form>
           </div>
-
-          <div className="operation operation--loan">
-            <h2>Request loan</h2>
-            <form className="form form--loan">
-              <input
-                type="number"
-                className="form__input form__input--loan-amount"
-              />
-              <button className="form__btn form__btn--loan">&rarr;</button>
-              <label className="form__label form__label--loan">Amount</label>
-            </form>
-          </div>
-
+          
           <div className="operation operation--close">
             <h2>Close account</h2>
             <form className="form form--close">
@@ -99,10 +193,10 @@ function App() {
               <label className="form__label">Confirm PIN</label>
             </form>
           </div>
-
           <p className="logout-timer">
             You will be logged out in <span className="timer">05:00</span>
           </p>
+          */}
         </main>
       )}
     </>
