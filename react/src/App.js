@@ -5,6 +5,7 @@ import Login from "./Componentes/Login/Login";
 import Summary from "./Componentes/Summary/Summary";
 import Movements from "./Componentes/Movements/Movements";
 import Balance from "./Componentes/Balance/Balance";
+import CountdownTimer from "./Componentes/CountDown/CountDown";
 
 function App() {
   const [account, setAccount] = useState({});
@@ -37,20 +38,36 @@ function App() {
   };
 
   // Función para manejar transferencias
-  const handleTransfer = (amount, targetAccount) => {
-    // Representa la transferencia como un retiro de la cuenta actual y un depósito en la cuenta destino
-    const withdrawalAmount = -Math.abs(amount);
-    const depositAmount = Math.abs(amount);
+    const handleTransfer = (amount, targetAccount) => {
+  const withdrawalAmount = -Math.abs(amount);
+  const depositAmount = Math.abs(amount);
 
-    const newMovements = [
-      ...movements,
-      { type: "withdrawal", amount: withdrawalAmount },
-      { type: "deposit", amount: depositAmount, targetAccount },
-    ];
+  const newMovements = [
+    ...movements,
+    { type: "withdrawal", amount: withdrawalAmount },
+    { type: "deposit", amount: depositAmount, targetAccount },
+  ];
 
-    setAccount({ ...account, movements: newMovements });
-    sendTransactionToServer({ type: "transfer", amount, targetAccount });
-  };
+  // Calcular el nuevo balance sumando todos los montos de los movimientos
+  const newBalance = newMovements.reduce((acc, movement) => acc + movement.amount, 0);
+
+  // Actualizar el estado de la cuenta con los nuevos movimientos
+  setAccount({
+    ...account,
+    movements: newMovements,
+  });
+
+  // Enviar la transacción al servidor
+  sendTransactionToServer({ type: "transfer", amount, targetAccount });
+
+  // Actualizar el estado del balance después de la transferencia
+  setAccount((prevAccount) => ({
+    ...prevAccount,
+    balance: newBalance,
+  }));
+};
+
+  
 
   const handleLogin = (user, pin) => {
     // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
@@ -133,6 +150,7 @@ function App() {
           <Balance movements={movements} />
           <Movements movements={movements} />
           <Summary movements={movements} />
+          {/* Función para realizar depósitos */}
           <div className="operation operation--loan">
             <h2>Haz un depósito</h2>
             <form
@@ -156,6 +174,7 @@ function App() {
               <label className="form__label">Amount</label>
             </form>
           </div>
+          {/* Función para realizar retiros */}
           <div className="operation operation--withdrawal">
             <h2>Haz un retiro</h2>
             <form
@@ -179,17 +198,19 @@ function App() {
               <label className="form__label">Amount</label>
             </form>
           </div>
+          {/* Formulario para realizar transferencias */}
           <div className="operation operation--transfer">
             <h2>Transferencia</h2>
-            <form className="form form--transfer">
-              onSubmit=
-              {(e) => {
+            <form
+              className="form form--transfer"
+              onSubmit={(e) => {
                 e.preventDefault();
                 const amount = parseFloat(e.target.elements.amount.value);
                 const targetAccount = e.target.elements.targetAccount.value;
                 handleTransfer(amount, targetAccount);
               }}
-              
+            >
+              {/* Campo de entrada para la cantidad a transferir */}
               <input
                 type="number"
                 step="0.01"
@@ -197,6 +218,7 @@ function App() {
                 name="amount"
                 required
               />
+              {/* Campo de entrada para la cuenta de destino */}
               <input
                 type="text"
                 className="form__input form__input--to"
@@ -204,13 +226,16 @@ function App() {
                 placeholder="Target Account"
                 required
               />
+              {/* Botón de envío del formulario */}
               <button type="submit" className="form__btn form__btn--transfer">
                 &rarr;
               </button>
+              {/* Etiquetas para los campos del formulario */}
               <label className="form__label">Transfer to</label>
               <label className="form__label">Amount</label>
             </form>
           </div>
+
           <div className="operation operation--close">
             <h2>Close account</h2>
             <form className="form form--close">
@@ -226,9 +251,9 @@ function App() {
             </form>
           </div>
           <p className="logout-timer">
-            You will be logged out in <span className="timer">05:00</span>
+            <CountdownTimer />
           </p>
-          */}
+
         </main>
       )}
     </>
@@ -236,3 +261,4 @@ function App() {
 }
 
 export default App;
+
