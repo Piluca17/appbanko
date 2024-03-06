@@ -27,10 +27,29 @@ function App() {
     //Representa el retiro con un valor negativo
     const withdrawalAmount = -Math.abs(amount);
     // Simplemente agregamos una nueva transacción de retiro al array de movimientos
-    const newMovements = [...movements, { type: "withdrawal", amount: withdrawalAmount }];
+    const newMovements = [
+      ...movements,
+      { type: "withdrawal", amount: withdrawalAmount },
+    ];
     setAccount({ ...account, movements: newMovements });
     // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
-    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount});
+    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount });
+  };
+
+  // Función para manejar transferencias
+  const handleTransfer = (amount, targetAccount) => {
+    // Representa la transferencia como un retiro de la cuenta actual y un depósito en la cuenta destino
+    const withdrawalAmount = -Math.abs(amount);
+    const depositAmount = Math.abs(amount);
+
+    const newMovements = [
+      ...movements,
+      { type: "withdrawal", amount: withdrawalAmount },
+      { type: "deposit", amount: depositAmount, targetAccount },
+    ];
+
+    setAccount({ ...account, movements: newMovements });
+    sendTransactionToServer({ type: "transfer", amount, targetAccount });
   };
 
   const handleLogin = (user, pin) => {
@@ -161,15 +180,33 @@ function App() {
             </form>
           </div>
           <div className="operation operation--transfer">
-            {" "}
-            *<h2>Transfer money</h2>
+            <h2>Transferencia</h2>
             <form className="form form--transfer">
-              <input type="text" className="form__input form__input--to" />
+              onSubmit=
+              {(e) => {
+                e.preventDefault();
+                const amount = parseFloat(e.target.elements.amount.value);
+                const targetAccount = e.target.elements.targetAccount.value;
+                handleTransfer(amount, targetAccount);
+              }}
+              
               <input
                 type="number"
+                step="0.01"
                 className="form__input form__input--amount"
+                name="amount"
+                required
               />
-              <button className="form__btn form__btn--transfer">&rarr;</button>
+              <input
+                type="text"
+                className="form__input form__input--to"
+                name="targetAccount"
+                placeholder="Target Account"
+                required
+              />
+              <button type="submit" className="form__btn form__btn--transfer">
+                &rarr;
+              </button>
               <label className="form__label">Transfer to</label>
               <label className="form__label">Amount</label>
             </form>
