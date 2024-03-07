@@ -54,10 +54,30 @@ function App() {
     const withdrawalAmount = Math.abs(amount);
     const balance = account.movements.reduce((acc, mov) => acc + mov.amount, 0);
     console.log(withdrawalAmount, balance);
-    if (withdrawalAmount < balance) {
+    if (withdrawalAmount <= balance) {
+      //Retirar la transacción de retiro
       sendTransactionToServer({
+        type: "withdrawal",
         date: new Date().toISOString(),
-        amount: withdrawalAmount,
+        amount: -withdrawalAmount,
+      });
+      // Actualizar el array de movimientos
+      const newMovements = [
+        ...movements,
+        { type: "withdrawal", amount: -withdrawalAmount },
+      ];
+
+      // Calcular el nuevo balance
+      const newBalance = newMovements.reduce(
+        (acc, movement) => acc + movement.amount,
+        0
+      );
+
+      // Actualizar el estado de la cuenta con los nuevos movimientos y saldo
+      setAccount({
+        ...account,
+        movements: newMovements,
+        balance: newBalance,
       });
     } else {
       alert("No tienes suficiente saldo");
