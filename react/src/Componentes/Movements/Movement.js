@@ -1,5 +1,7 @@
 import "./Movement.css";
-function Movement({ position, amount }) {
+import Moment from "react-moment";
+
+function Movement({ position, amount, date }) {
   const type = amount > 0 ? "deposit" : "withdrawal";
   return (
     <div className="movements__row">
@@ -7,7 +9,9 @@ function Movement({ position, amount }) {
         {/*Posición empieza en 0*/}
         {position + 1} {type}
       </div>
-      <div className="movements__date">3 days ago</div>
+      <div className="movements__date">
+        <Moment fromNow>{date}</Moment>
+      </div>
       <div className="movements__value">{amount}€</div>
     </div>
   );
