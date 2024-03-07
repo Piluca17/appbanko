@@ -13,8 +13,86 @@ function App() {
 
   //Si no recogemos ningun dato en movimientos, me lo das como un array vacío
   const { movements = [], owner: user = "" } = account;
+<<<<<<< HEAD
   
   //Llamada al servidor 
+=======
+
+  // Función para manejar depósitos
+  const handleDeposit = (amount) => {
+    // Simplemente agregamos una nueva transacción de depósito al array de movimientos
+    const newMovements = [...movements, { type: "deposit", amount }];
+    setAccount({ ...account, movements: newMovements });
+    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+    sendTransactionToServer({ type: "deposit", amount });
+  };
+
+  // Función para manejar retiros
+  const handleWithdrawal = (amount) => {
+    //Representa el retiro con un valor negativo
+    const withdrawalAmount = -Math.abs(amount);
+    // Simplemente agregamos una nueva transacción de retiro al array de movimientos
+    const newMovements = [
+      ...movements,
+      { type: "withdrawal", amount: withdrawalAmount },
+    ];
+    setAccount({ ...account, movements: newMovements });
+    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount });
+  };
+
+  // Función para manejar transferencias
+    const handleTransfer = (amount, targetAccount) => {
+  const withdrawalAmount = -Math.abs(amount);
+  const depositAmount = Math.abs(amount);
+
+  const newMovements = [
+    ...movements,
+    { type: "withdrawal", amount: withdrawalAmount },
+    { type: "deposit", amount: depositAmount, targetAccount },
+  ];
+
+  // Calcular el nuevo balance sumando todos los montos de los movimientos
+  const newBalance = newMovements.reduce((acc, movement) => acc + movement.amount, 0);
+
+  // Actualizar el estado de la cuenta con los nuevos movimientos
+  setAccount({
+    ...account,
+    movements: newMovements,
+  });
+
+  // Enviar la transacción al servidor
+  sendTransactionToServer({ type: "transfer", amount, targetAccount });
+
+  // Actualizar el estado del balance después de la transferencia
+  setAccount((prevAccount) => ({
+    ...prevAccount,
+    balance: newBalance,
+  }));
+};
+
+  
+
+  const handleLogin = (user, pin) => {
+    // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
+    // Validamos si el usuario y la contraseña son correctos.
+
+    fetch(`http://localhost:4000/login?username=${user}&pin=${pin}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error en la llamada a la API");
+        }
+        return res.json();
+      })
+      .then((datos) => {
+        setAccount(datos.account);
+        setToken(datos.token);
+        console.log(datos);
+      })
+      .catch((error) => console.error(error, "estas con error"));
+  };
+
+>>>>>>> fb86907b090a3ba9c724e72fb387f6cd268f67ca
   const sendTransactionToServer = (transaction) => {
     // Envía la transacción al servidor
     fetch("http://localhost:4000/transactions", {
@@ -276,6 +354,10 @@ function App() {
           <p className="logout-timer">
             <CountdownTimer />
           </p>
+<<<<<<< HEAD
+=======
+
+>>>>>>> fb86907b090a3ba9c724e72fb387f6cd268f67ca
         </main>
       )}
     </>
@@ -283,3 +365,4 @@ function App() {
 }
 
 export default App;
+
