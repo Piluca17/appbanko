@@ -33,7 +33,7 @@ function App() {
         return res.json();
       })
       .then((response) => {
-        console.log("Transacción enviada con éxito:", response);
+        console.log(response, response.status, response.ok);
         const newMovements = [...movements, transaction];
         setAccount({ ...account, movements: newMovements });
       })
@@ -47,34 +47,17 @@ function App() {
     sendTransactionToServer({ date: new Date().toISOString(), amount });
 
   const handleWithdrawal = (amount) => {
-    const withdrawalAmount = -Math.abs(amount);
-
-    // Verificar si el retiro es mayor que el saldo disponible
-    if (withdrawalAmount > account.balance) {
-      alert("Saldo insuficiente. No puedes retirar más de tu saldo actual.");
-      return;
+    const withdrawalAmount = Math.abs(amount);
+    const balance = account.movements.reduce((acc, mov) => acc + mov.amount, 0);
+    console.log(withdrawalAmount, balance);
+    if (withdrawalAmount < balance) {
+      sendTransactionToServer({
+        date: new Date().toISOString(),
+        amount: withdrawalAmount,
+      });
+    } else {
+      alert("No tienes suficiente saldo");
     }
-
-    // Verificar si el retiro dejaría el saldo en negativo
-    const newBalance = account.balance + withdrawalAmount;
-    if (newBalance < 0) {
-      alert("Saldo insuficiente. No puedes retirar más de tu saldo actual.");
-      return;
-    }
-
-    const newMovements = [
-      ...movements,
-      { type: "withdrawal", amount: withdrawalAmount },
-    ];
-
-    // Actualizar el estado solo si la verificación es exitosa
-    setAccount((prevAccount) => ({
-      ...prevAccount,
-      movements: newMovements,
-      balance: newBalance,
-    }));
-
-    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount });
   };
 
   // Función para manejar transferencias
@@ -161,7 +144,7 @@ function App() {
             </p>
             ""
           </div>
-          
+
           {/* Hacer los movimientos
           recibe una propiedad que es el array de movimientos
           muestra una lista de movimientos que son un componente llamado Movement
