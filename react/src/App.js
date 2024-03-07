@@ -44,7 +44,11 @@ function App() {
 
   // Función para manejar depósitos
   const handleDeposit = (amount) =>
-    sendTransactionToServer({ date: new Date().toISOString(), amount });
+    sendTransactionToServer({
+      type: "deposit",
+      date: new Date().toISOString(),
+      amount,
+    });
 
   const handleWithdrawal = (amount) => {
     const withdrawalAmount = Math.abs(amount);
