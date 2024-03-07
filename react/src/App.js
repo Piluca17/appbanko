@@ -5,6 +5,7 @@ import Login from "./Componentes/Login/Login";
 import Summary from "./Componentes/Summary/Summary";
 import Movements from "./Componentes/Movements/Movements";
 import Balance from "./Componentes/Balance/Balance";
+import CountdownTimer from "./Componentes/CountDown/CountDown";
 
 function App() {
   const [account, setAccount] = useState({});
@@ -12,65 +13,8 @@ function App() {
 
   //Si no recogemos ningun dato en movimientos, me lo das como un array vacío
   const { movements = [], owner: user = "" } = account;
-
-  // Función para manejar depósitos
-  const handleDeposit = (amount) => {
-    // Simplemente agregamos una nueva transacción de depósito al array de movimientos
-    const newMovements = [...movements, { type: "deposit", amount }];
-    setAccount({ ...account, movements: newMovements });
-    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
-    sendTransactionToServer({ type: "deposit", amount });
-  };
-
-  // Función para manejar retiros
-  const handleWithdrawal = (amount) => {
-    //Representa el retiro con un valor negativo
-    const withdrawalAmount = -Math.abs(amount);
-    // Simplemente agregamos una nueva transacción de retiro al array de movimientos
-    const newMovements = [
-      ...movements,
-      { type: "withdrawal", amount: withdrawalAmount },
-    ];
-    setAccount({ ...account, movements: newMovements });
-    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
-    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount });
-  };
-
-  // Función para manejar transferencias
-  const handleTransfer = (amount, targetAccount) => {
-    // Representa la transferencia como un retiro de la cuenta actual y un depósito en la cuenta destino
-    const withdrawalAmount = -Math.abs(amount);
-    const depositAmount = Math.abs(amount);
-
-    const newMovements = [
-      ...movements,
-      { type: "withdrawal", amount: withdrawalAmount },
-      { type: "deposit", amount: depositAmount, targetAccount },
-    ];
-
-    setAccount({ ...account, movements: newMovements });
-    sendTransactionToServer({ type: "transfer", amount, targetAccount });
-  };
-
-  const handleLogin = (user, pin) => {
-    // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
-    // Validamos si el usuario y la contraseña son correctos.
-
-    fetch(`http://localhost:4000/login?username=${user}&pin=${pin}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error en la llamada a la API");
-        }
-        return res.json();
-      })
-      .then((datos) => {
-        setAccount(datos.account);
-        setToken(datos.token);
-        console.log(datos);
-      })
-      .catch((error) => console.error(error, "estas con error"));
-  };
-
+  
+  //Llamada al servidor 
   const sendTransactionToServer = (transaction) => {
     // Envía la transacción al servidor
     fetch("http://localhost:4000/transactions", {
@@ -94,6 +38,102 @@ function App() {
         console.error("Error al enviar la transacción:", error)
       );
   };
+
+
+
+  // Función para manejar depósitos
+  const handleDeposit = (amount) => {
+    // Simplemente agregamos una nueva transacción de depósito al array de movimientos
+    const newMovements = [...movements, { type: "deposit", amount }];
+    setAccount({ ...account, movements: newMovements });
+    // Envía la transacción al servidor (puedes usar fetch u otras bibliotecas como axios)
+    sendTransactionToServer({ type: "deposit", amount });
+  };
+
+  const handleWithdrawal = (amount) => {
+    const withdrawalAmount = -Math.abs(amount);
+
+    // Verificar si el retiro es mayor que el saldo disponible
+    if (withdrawalAmount > account.balance) {
+      alert("Saldo insuficiente. No puedes retirar más de tu saldo actual.");
+      return;
+    }
+
+    // Verificar si el retiro dejaría el saldo en negativo
+    const newBalance = account.balance + withdrawalAmount;
+    if (newBalance < 0) {
+      alert("Saldo insuficiente. No puedes retirar más de tu saldo actual.");
+      return;
+    }
+
+    const newMovements = [
+      ...movements,
+      { type: "withdrawal", amount: withdrawalAmount },
+    ];
+
+    // Actualizar el estado solo si la verificación es exitosa
+    setAccount((prevAccount) => ({
+      ...prevAccount,
+      movements: newMovements,
+      balance: newBalance,
+    }));
+
+    sendTransactionToServer({ type: "withdrawal", amount: withdrawalAmount });
+  };
+
+  // Función para manejar transferencias
+  const handleTransfer = (amount, targetAccount) => {
+    const withdrawalAmount = -Math.abs(amount);
+    const depositAmount = Math.abs(amount);
+
+    const newMovements = [
+      ...movements,
+      { type: "withdrawal", amount: withdrawalAmount },
+      { type: "deposit", amount: depositAmount, targetAccount },
+    ];
+
+    // Calcular el nuevo balance sumando todos los montos de los movimientos
+    const newBalance = newMovements.reduce(
+      (acc, movement) => acc + movement.amount,
+      0
+    );
+
+    // Actualizar el estado de la cuenta con los nuevos movimientos
+    setAccount({
+      ...account,
+      movements: newMovements,
+    });
+
+    // Enviar la transacción al servidor
+    sendTransactionToServer({ type: "transfer", amount, targetAccount });
+
+    // Actualizar el estado del balance después de la transferencia
+    setAccount((prevAccount) => ({
+      ...prevAccount,
+      balance: newBalance,
+    }));
+  };
+
+  const handleLogin = (user, pin) => {
+    // Aquí realizamos la lógica de autenticación, por ejemplo, enviamos los datos a un servidor.
+    // Validamos si el usuario y la contraseña son correctos.
+
+    fetch(`http://localhost:4000/login?username=${user}&pin=${pin}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error en la llamada a la API");
+        }
+        return res.json();
+      })
+      .then((datos) => {
+        setAccount(datos.account);
+        setToken(datos.token);
+        console.log(datos);
+      })
+      .catch((error) => console.error(error, "estas con error"));
+  };
+
+  
 
   return (
     <>
@@ -133,6 +173,7 @@ function App() {
           <Balance movements={movements} />
           <Movements movements={movements} />
           <Summary movements={movements} />
+          {/* Función para realizar depósitos */}
           <div className="operation operation--loan">
             <h2>Haz un depósito</h2>
             <form
@@ -156,6 +197,7 @@ function App() {
               <label className="form__label">Amount</label>
             </form>
           </div>
+          {/* Función para realizar retiros */}
           <div className="operation operation--withdrawal">
             <h2>Haz un retiro</h2>
             <form
@@ -179,17 +221,19 @@ function App() {
               <label className="form__label">Amount</label>
             </form>
           </div>
+          {/* Formulario para realizar transferencias */}
           <div className="operation operation--transfer">
             <h2>Transferencia</h2>
-            <form className="form form--transfer">
-              onSubmit=
-              {(e) => {
+            <form
+              className="form form--transfer"
+              onSubmit={(e) => {
                 e.preventDefault();
                 const amount = parseFloat(e.target.elements.amount.value);
                 const targetAccount = e.target.elements.targetAccount.value;
                 handleTransfer(amount, targetAccount);
               }}
-              
+            >
+              {/* Campo de entrada para la cantidad a transferir */}
               <input
                 type="number"
                 step="0.01"
@@ -197,6 +241,7 @@ function App() {
                 name="amount"
                 required
               />
+              {/* Campo de entrada para la cuenta de destino */}
               <input
                 type="text"
                 className="form__input form__input--to"
@@ -204,13 +249,16 @@ function App() {
                 placeholder="Target Account"
                 required
               />
+              {/* Botón de envío del formulario */}
               <button type="submit" className="form__btn form__btn--transfer">
                 &rarr;
               </button>
+              {/* Etiquetas para los campos del formulario */}
               <label className="form__label">Transfer to</label>
               <label className="form__label">Amount</label>
             </form>
           </div>
+
           <div className="operation operation--close">
             <h2>Close account</h2>
             <form className="form form--close">
@@ -226,9 +274,8 @@ function App() {
             </form>
           </div>
           <p className="logout-timer">
-            You will be logged out in <span className="timer">05:00</span>
+            <CountdownTimer />
           </p>
-          */}
         </main>
       )}
     </>
