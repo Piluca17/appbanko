@@ -6,6 +6,7 @@ import Summary from "./Componentes/Summary/Summary";
 import Movements from "./Componentes/Movements/Movements";
 import Balance from "./Componentes/Balance/Balance";
 import CountdownTimer from "./Componentes/CountDown/CountDown";
+import Account from "./Componentes/Info/Info";
 
 function App() {
   const [account, setAccount] = useState({});
@@ -148,6 +149,7 @@ function App() {
         {/* Hacer el componente Login -> usar useRef como ya hicimos para hacer el login */}
         <Login onLogin={handleLogin} />
       </nav>
+      <Account account={account} /> 
 
       {/*Si existe usuario y, como este dato es verdadero, saca todo lo que se define a continuación*/}
       {user && (
